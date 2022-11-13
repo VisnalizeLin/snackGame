@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+      }
+      html,
+      body {
+        height: 100%;
+      }
+      body {
+        background: url(https://ts1.cn.mm.bing.net/th/id/R-C.9528967896bb6f9f0f41d413ec2d2fd2?rik=X1P7hSzjZqA0og&riu=http%3a%2f%2fimage.qianye88.com%2fpic%2f780cbbb8e750b4c37dfb3d61e4d4ed40&ehk=e0z5sjubFSWMbH9G9leSMniYqNmRYj1ExuxEOZnpTKU%3d&risl=&pid=ImgRaw&r=0) no-repeat;
+        background-size: cover;
+        opacity: 0.5;
+      }
+      .btnbox {
+        width: 200px;
+        height: 200px;
+        background-color: rgb(162, 133, 217);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-evenly;
+        align-items: center;
+      }
+      .btnbox button {
+        width: 100px;
+        height: 40px;
+        font-size: 23px;
+        background-color: blue;
+        color: #fff;
+        border-radius: 30px;
+        cursor: pointer;
+      }
+      .map {
+        width: 1000px;
+        height: 600px;
+        position: fixed;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        right: 0;
+        margin: auto;
+        background-color: rgb(23, 20, 20);
+        box-shadow: 0 0 100px black inset, 0 0 30px white;
+      }
+      .map > div {
+        width: 20px;
+        height: 20px;
+        position: absolute;
+        border-radius: 50%;
+        box-shadow: 0 0 10px yellow;
+      }
+      div.head {
+        background: radial-gradient(orange, red);
+      }
+      div.body {
+        background: radial-gradient(#e9c55b, #eb8f67);
+      }
+      div.food {
+        background: radial-gradient(#7de697, #088502);
+        animation: foodAnimate 0.8s linear infinite;
+      }
+
+      @keyframes foodAnimate {
+        0% {
+          box-shadow: 0 0 10px white;
+        }
+        50% {
+          box-shadow: 0 0 70px yellowgreen;
+        }
+        100% {
+          box-shadow: 0 0 10px white;
+        }
+      }
+      audio {
+        /* display: none; */
+        position: fixed;
+        left: 200px;
+        top: 0;
+      }
+      .music {
+        position: fixed;
+        left: 180px;
+        top: 180px;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background-color: skyblue;
+        text-align: center;
+        cursor: pointer;
+      }
+      .score {
+        position: fixed;
+        top: 10px;
+        left: 220px;
+        width: 200px;
+        height: 80px;
+        color: white;
+        font-size: 50px;
+        text-shadow: 0 0 30px white;
+      }
+      .gameover {
+        width: 1000px;
+        height: 600px;
+        position: fixed;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        right: 0;
+        margin: auto;
+        background: url(https://wallpapercave.com/wp/X1EOqAY.png) no-repeat;
+        background-position: center;
+        z-index: 999;
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="gameover"></div>
+    <div class="btnbox">
+      <button id="btnStart">开始</button>
+      <button id="btnStop">暂停</button>
+      <button id="btnRst">重新开始</button>
+    </div>
+    <div class="music">M</div>
+    <div class="score">分数: <span></span></div>
+
+    <div class="map">
+      <!-- <div class="head"></div> -->
+      <!-- <div class="body"></div> -->
+      <!-- <div class="food"></div> -->
+    </div>
+
+    <audio src="http://m801.music.126.net/20221030224428/e496576f445d4e7198c94dd96809fc83/jdymusic/obj/wo3DlMOGwrbDjj7DisKw/14096594999/2da6/d24a/b45c/187d80e280c668d6a57e878e93f35722.mp3" autoplay="autoplay" controls="controls" loop="loop" preload="auto" hidden="true"></audio>
+
+    <script>
+      // 定义food类
+      class Food {
+        constructor(select) {
+          // 获取节点
+          this.map = document.querySelector(select)
+          // 创建食物
+          this.food = document.createElement('div')
+          // 定义样式
+          this.food.className = 'food'
+          // 放到地图中
+          this.map.appendChild(this.food)
+          // 定义坐标
+          this.x = 0
+          this.y = 0
+
+          // 调用坐标点
+          this.foodPos()
+        }
+        // 定义坐标点
+        foodPos() {
+          // 拿到地图范围,并获得总共的格子数
+          const w_num = this.map.offsetWidth / 20
+          const h_num = this.map.offsetHeight / 20
+          // 随机生成数
+          let w_n = Math.floor(Math.random() * w_num)
+          let h_n = Math.floor(Math.random() * h_num)
+          // 根据随机数进行坐标计算
+          this.x = w_n * 20
+          this.y = h_n * 20
+          // 赋值
+          this.food.style.left = this.x + 'px'
+          this.food.style.top = this.y + 'px'
+        }
+      }
+
+      // new Food('.map')
+
+      // 蛇对象
+      class Sanck {
+        constructor(select) {
+          // 获取节点
+          this.map = document.querySelector(select)
+          // 蛇的运动方向
+          this.direction = 'right'
+          // 蛇的数组(蛇的头和身体都存储到数组中,头从第0位开始)
+          this.snacklist = []
+          // 定义初始坐标位置
+          this.sanckPos = { x: 0, y: 0 }
+
+          this.createSnack() // 创建一条蛇
+          // this.move() // 调用移动方法
+        }
+        // 创建蛇头函数
+        createHead() {
+          // 判断有无蛇头
+          // 如果有就创建新的蛇头追加在原先蛇头坐标后面
+          const head = this.snacklist[0]
+          if (head) {
+            switch (this.direction) {
+              case 'left':
+                this.sanckPos.x = head.offsetLeft - 20
+                this.sanckPos.y = head.offsetTop
+                break
+              case 'right':
+                this.sanckPos.x = head.offsetLeft + 20
+                this.sanckPos.y = head.offsetTop
+                break
+              case 'top':
+                this.sanckPos.x = head.offsetLeft
+                this.sanckPos.y = head.offsetTop - 20
+                break
+              case 'bottom':
+                this.sanckPos.x = head.offsetLeft
+                this.sanckPos.y = head.offsetTop + 20
+                break
+              default:
+                break
+            }
+            // 把多的蛇头变成身体
+            head.className = 'body'
+          }
+
+          // 创建蛇头
+          const snackHead = document.createElement('div')
+          // 添加样式
+          snackHead.className = 'head'
+          // 存入数组
+          this.snacklist.unshift(snackHead)
+          // 赋值坐标
+          snackHead.style.left = this.sanckPos.x + 'px'
+          snackHead.style.top = this.sanckPos.y + 'px'
+          //放入地图中
+          this.map.appendChild(snackHead)
+        }
+
+        // 创建一条蛇
+        createSnack() {
+          for (let i = 0; i < 3; i++) {
+            this.createHead()
+          }
+          // console.log(this.snacklist)
+        }
+
+        // 蛇移动的方法
+        // 蛇头后面追加一个蛇头,原先蛇头变身体,末尾删除一个
+        move() {
+          let lastbody = this.snacklist.pop() // 数组中移除
+          lastbody.remove() // 地图上移除
+          // 新增蛇头
+          this.createHead()
+        }
+
+        // 判断是否吃到食物
+        isEat(foodx, foody) {
+          // 判断头和食物的坐标是否重合
+          const head = this.snacklist[0] // 获取头部
+          const headX = head.offsetLeft // 获取x坐标
+          const headY = head.offsetTop // 获取y坐标
+          if (foodx === headX && foody === headY) {
+            return true
+          }
+          return false
+        }
+
+        // 判断蛇死没死
+        isDie() {
+          // 判断蛇头有没有到边界
+          const head = this.snacklist[0] // 获取头部
+          const headX = head.offsetLeft // 获取x坐标
+          const headY = head.offsetTop // 获取y坐标
+          if (headX < 0 || headY < 0 || headX >= this.map.clientWidth || headY >= this.map.clientHeight) {
+            return true
+          }
+          return false
+        }
+      }
+
+      // new Sanck('.map')
+
+      // 设计游戏类
+      class Game {
+        constructor(select) {
+          // 获取节点
+          this.map = document.querySelector(select)
+          this.score = document.querySelector('.score span')
+          this.zanting = document.querySelector('#btnStop')
+          this.kaishi = document.querySelector('#btnStart')
+          this.jieshu = document.querySelector('.gameover')
+          this.food = new Food(select) // 食物类
+          this.snack = new Sanck(select) // 蛇类
+          // 定义定时器
+          this.timer = null
+          // 得分
+          this.count = 0
+        }
+        // 定义游戏开始的方法
+        startGame() {
+          this.timer = setInterval(() => {
+            this.snack.move() // 让蛇动起来
+            // 判断是否吃食物
+            if (this.snack.isEat(this.food.x, this.food.y)) {
+              // 吃到食物变长
+              this.snack.createHead()
+              // 食物位置更新
+              this.food.foodPos()
+              this.count++
+              this.score.innerText = this.count
+            }
+            // 死亡
+            this.gameOver()
+          }, 100)
+        }
+        // 死亡
+        gameOver() {
+          // 判断是否死亡
+          if (this.snack.isDie()) {
+            clearInterval(this.timer)
+            // alert('Game Over!!! 最终得分: ' + this.count + ' 分 ')
+            this.jieshu.style.display = 'block'
+            this.zanting.disabled = true
+            this.kaishi.disabled = true
+          }
+        }
+        // 暂停
+        mypause() {
+          clearInterval(this.timer)
+        }
+        // 重新开始
+        reStart() {
+          location.reload()
+        }
+        // 改变方向
+        change(type) {
+          this.snack.direction = type
+        }
+      }
+
+      //实例游戏对象
+      const game = new Game('.map')
+      // 按钮
+      const mystart = document.getElementById('btnStart') // 开始
+      const mystop = document.getElementById('btnStop') // 暂停
+      const myrestart = document.getElementById('btnRst') // 结束
+      const myaudio = document.querySelector('audio')
+      const music = document.querySelector('.music')
+
+      music.onclick = function () {
+        myaudio.pause()
+      }
+      // 开始控制
+      mystart.onclick = function (e) {
+        myaudio.play()
+        game.startGame()
+        this.disabled = true
+      }
+
+      // 暂停控制
+      mystop.onclick = function () {
+        game.mypause()
+        mystart.disabled = false
+      }
+      // 重新开始
+      myrestart.onclick = function () {
+        game.reStart()
+      }
+
+      // 键盘监听 左37 上38 右39 下40
+      document.onkeydown = function (e) {
+        // console.log(e.keyCode)
+        switch (e.keyCode) {
+          case 37:
+            game.change('left')
+            break
+          case 38:
+            game.change('top')
+            break
+          case 39:
+            game.change('right')
+            break
+          case 40:
+            game.change('bottom')
+            break
+          // case 13:
+          //   game.startGame() // 回车键开始游戏
+          //   mystart.disabled = true
+          //   myaudio.play()
+          //   break
+          // case 32:
+          //   game.mypause()
+          //   mystart.disabled = false
+          //   break
+          default:
+            break
+        }
+      }
+    </script>
+  </body>
+</html>
